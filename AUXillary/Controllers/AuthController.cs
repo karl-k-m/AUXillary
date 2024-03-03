@@ -1,7 +1,9 @@
+using AUXillary.Data;
 using AUXillary.DTO;
 using AUXillary.Models;
 using AUXillary.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AUXillary.Controllers;
 
@@ -9,17 +11,51 @@ namespace AUXillary.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    public AuthController()
+    private readonly AuthService _authService;
+    private readonly ApiContext _apiContext;
+    
+    public AuthController(ApiContext apiContext, AuthService authService)
     {
-        AuthService _authService = new AuthService();
+        _apiContext = apiContext;
+        _authService = authService;
+    }
+
+    /// <summary>
+    /// Register a new user
+    /// </summary>
+    /// <param name="request">User registration details</param>
+    /// <returns>Success message</returns>
+    [HttpPost("register")]
+    public async Task<ActionResult<User>> RegisterUser(UserRegisterDTO request)
+    {
+        var result = await _authService.RegisterUser(request);
+        if (!result.Success)
+        {
+            return BadRequest(result.Message);
+        }
+        return Ok(result.Message);
     }
     
-    public static User user = new User();
-
-    // Register new user
-    [HttpPost("register")]
-    public async Task<ActionResult<User>> Register(UserRegisterDTO request)
+    /// <summary>
+    /// Login a user
+    /// </summary>
+    /// <param name="request">User login details</param>
+    /// <returns>Success message</returns>
+    [HttpPost("login")]
+    public async Task<ActionResult<User>> LoginUser(UserLoginDTO request)
     {
-        return Ok();
+        var result = await _authService.LoginUser(request);
+        if (!result.Success)
+        {
+            return BadRequest(result.Message);
+        }
+        return Ok(result.Message);
+    }
+    
+    // Get all users (testing purposes)
+    [HttpGet("users")]
+    public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+    {
+        return await _apiContext.Users.ToListAsync();
     }
 }
